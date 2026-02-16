@@ -1,0 +1,44 @@
+solver: cbc
+timestep_hours: 1.0
+
+# Production rate limits when ON (widgets/hour)
+rate_min: 10.0
+rate_max: 100.0
+
+# Daily production requirement (widgets)
+daily_widget_target: 200.0
+daily_target_mode: equality   # "equality" or "minimum"
+
+# Optional startup penalty (€/start)
+startup_cost: 0.0
+
+# Min up/down times (hours). Set 0 to disable.
+min_up_hours: 2
+min_down_hours: 1
+
+# Optional ramping in rate (widgets/hour per hour). Set null to disable.
+ramp_up: null
+ramp_down: null
+
+# Input constraints: cap max rate each hour (e.g., raw material availability)
+# Options:
+#  - mode: none
+#  - mode: constant, max_rate_constant: <value>
+#  - mode: csv_column, max_rate_column: <column_name_in_prices_csv>
+input_constraints:
+  mode: csv_column
+  max_rate_column: input_max_rate
+
+# Power curve: power_kW = f(rate)
+curve:
+  type: polynomial
+  a: 0.005
+  b: 0.6
+  c: 5.0
+  n_points: 12
+
+# Or use explicit breakpoints:
+# curve:
+#   type: breakpoints
+#   rate_points: [0, 20, 40, 60, 80, 100]
+#   power_points: [0, 18, 45, 78, 118, 165]

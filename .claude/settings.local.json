@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python producer_milp.py:*)"
+    ]
+  }
+}
