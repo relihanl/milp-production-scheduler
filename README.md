@@ -21,13 +21,13 @@ The output is an optimized 24-hour schedule written to CSV.
 
 ## Features
 
--   Binary on/off scheduling\
--   Minimum up / minimum down time constraints\
--   Optional ramp rate constraints\
--   Startup cost penalties\
--   Daily production target (equality or minimum)\
--   Hourly production limits from CSV\
--   Nonlinear power curve using SOS2 piecewise linearization\
+-   Binary on/off scheduling
+-   Minimum up / minimum down time constraints
+-   Optional ramp rate constraints
+-   Startup cost penalties
+-   Daily production target (equality or minimum)
+-   Hourly production limits from CSV
+-   Nonlinear power curve using SOS2 piecewise linearization
 -   Solver support: **CBC** (recommended) or **GLPK**
 
 ------------------------------------------------------------------------
@@ -75,7 +75,7 @@ Windows (Conda): conda install -c conda-forge glpk
 
 ------------------------------------------------------------------------
 
-## 🚀 Running the Optimizer
+## Running the Optimizer
 
 python producer_milp.py\
 --config config.yaml\
@@ -86,7 +86,7 @@ python producer_milp.py\
 
 ------------------------------------------------------------------------
 
-## 📥 Input Files
+## Input Files
 
 ### prices.csv
 
@@ -155,36 +155,36 @@ See [blog_post.md](blog_post.md) for detailed analysis.
 
 ------------------------------------------------------------------------
 
-## 📤 Output: schedule.csv
+## Output: schedule.csv
 
 Columns:
 
--   hour\
--   price_eur_per_kwh\
--   input_max_rate\
--   on\
--   start\
--   stop\
--   rate_widgets_per_hour\
--   power_kw\
--   energy_kwh\
+-   hour
+-   price_eur_per_kwh
+-   input_max_rate
+-   on
+-   start
+-   stop
+-   rate_widgets_per_hour
+-   power_kw
+-   energy_kwh
 -   cost_eur
 
 Header comments include:
 
--   solver_status\
--   total_cost_eur\
--   total_widgets\
+-   solver_status
+-   total_cost_eur
+-   total_widgets
 -   daily_target
 
 ------------------------------------------------------------------------
 
-## 🧠 Optimization Model Summary
+## Optimization Model Summary
 
 Decision variables:
 
--   Binary on/off\
--   Production rate (continuous)\
+-   Binary on/off
+-   Production rate (continuous)
 -   Power consumption (continuous)
 
 Objective:
@@ -193,15 +193,15 @@ Minimize total electricity cost + startup cost
 
 Subject to:
 
--   Daily production requirement\
--   Minimum up/down time\
--   Ramp limits (optional)\
--   Input constraints\
+-   Daily production requirement
+-   Minimum up/down time
+-   Ramp limits (optional)
+-   Input constraints
 -   Piecewise-linear power curve
 
 ------------------------------------------------------------------------
 
-## 📊 Key Insights
+## Key Insights
 
 The quadratic coefficient **a** in the power curve acts as a "burst penalty" dial:
 
@@ -217,7 +217,7 @@ For a comprehensive analysis with experiments and insights, see **[blog_post.md]
 
 ------------------------------------------------------------------------
 
-## 📚 Learning Resources
+## Learning Resources
 
 - **[blog_post.md](blog_post.md)** - Comprehensive guide with:
   - MILP fundamentals
@@ -230,7 +230,7 @@ For a comprehensive analysis with experiments and insights, see **[blog_post.md]
 
 ------------------------------------------------------------------------
 
-## 📜 License
+## License
 
 Copyright © 2025 FullStackEnergy.com
 

@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Building a production scheduler using Mixed-Integer Linear Programming (MILP) to optimize 24-hour manufacturing schedules and minimize energy costs.">
+    <meta name="keywords" content="MILP, optimization, production scheduling, energy optimization, operations research">
+    <meta name="author" content="FullStackEnergy.com">
+    <title>Optimizing Production Schedules with Mixed-Integer Linear Programming | FullStackEnergy.com</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #2563eb;
+            --text-color: #1f2937;
+            --text-light: #6b7280;
+            --bg-color: #ffffff;
+            --bg-alt: #f9fafb;
+            --border-color: #e5e7eb;
+            --code-bg: #f3f4f6;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 0.5em;
+            color: var(--text-color);
+            line-height: 1.2;
+        }
+
+        h2 {
+            font-size: 2em;
+            font-weight: 600;
+            margin-top: 2em;
+            margin-bottom: 0.75em;
+            color: var(--text-color);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.3em;
+        }
+
+        h3 {
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+            color: var(--text-color);
+        }
+
+        p {
+            margin-bottom: 1em;
+            color: var(--text-color);
+        }
+
+        ul, ol {
+            margin-left: 2em;
+            margin-bottom: 1em;
+        }
+
+        li {
+            margin-bottom: 0.5em;
+        }
+
+        strong {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        code {
+            background-color: var(--code-bg);
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-family: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace;
+            font-size: 0.9em;
+            color: #c7254e;
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            padding: 1.5em;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin-bottom: 1.5em;
+            border: 1px solid var(--border-color);
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            color: var(--text-color);
+            font-size: 0.85em;
+            line-height: 1.6;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2em 0;
+            font-size: 0.9em;
+        }
+
+        th {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        tr:nth-child(even) {
+            background-color: var(--bg-alt);
+        }
+
+        .highlight {
+            background-color: #fef3c7;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+
+        .note {
+            background-color: #dbeafe;
+            border-left: 4px solid var(--primary-color);
+            padding: 1em 1.5em;
+            margin: 1.5em 0;
+            border-radius: 4px;
+        }
+
+        .success {
+            color: var(--success-color);
+        }
+
+        .checkmark::before {
+            content: "- ";
+        }
+
+        .footer {
+            margin-top: 3em;
+            padding-top: 2em;
+            border-top: 2px solid var(--border-color);
+            text-align: center;
+            color: var(--text-light);
+            font-size: 0.9em;
+        }
+
+        .license {
+            background-color: var(--bg-alt);
+            padding: 1.5em;
+            margin: 2em 0;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid var(--border-color);
+            margin: 2em 0;
+        }
+
+        a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .ascii-art {
+            font-family: monospace;
+            white-space: pre;
+            background-color: var(--code-bg);
+            padding: 1em;
+            border-radius: 6px;
+            overflow-x: auto;
+            line-height: 1.2;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            h2 {
+                font-size: 1.5em;
+            }
+
+            table {
+                font-size: 0.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Optimizing Production Schedules with Mixed-Integer Linear Programming</h1>
+
+        <h2>Introduction: The Day-Ahead Scheduling Problem</h2>
+
+        <p>Imagine you run a manufacturing facility that produces widgets 24/7. Your electricity costs vary by the hour—cheap at night, expensive during peak demand. Your machine can run at different production rates, but higher speeds consume more power (and not always proportionally). You have a daily production target to meet.</p>
+
+        <p><strong>The question:</strong> When should you run the machine, and at what rate, to minimize your energy costs while meeting your production goals?</p>
+
+        <p>This is a classic <strong>day-ahead scheduling problem</strong>, and it's exactly the kind of challenge that Mixed-Integer Linear Programming (MILP) excels at solving.</p>
+
+        <p>In this post, I'll walk through building a complete MILP optimizer in Python using <strong>Pyomo</strong> and the <strong>CBC solver</strong>. Along the way, we'll discover some fascinating insights about how equipment efficiency curves fundamentally shape optimal production strategies.</p>
+
+        <p>You can see the code <a href="https://github.com/relihanl/milp-production-scheduler" target="_blank" rel="noopener">here in GitHub</a>.</p>
+
+        <h2>What is MILP?</h2>
+
+        <p><strong>Mixed-Integer Linear Programming</strong> combines two types of decision variables:</p>
+        <ul>
+            <li><strong>Integer variables</strong>: Discrete choices (e.g., machine ON/OFF, which shift to schedule)</li>
+            <li><strong>Continuous variables</strong>: Quantities that can vary smoothly (e.g., production rate, power consumption)</li>
+        </ul>
+
+        <p>Unlike pure Linear Programming (LP), MILP can model real-world constraints like:</p>
+        <ul>
+            <li>Binary on/off decisions</li>
+            <li>Minimum up/down times (can't cycle too quickly)</li>
+            <li>Startup costs</li>
+            <li>Discrete operating modes</li>
+        </ul>
+
+        <p>The "Linear" part means the objective and constraints must be linear—but we'll see how to handle nonlinear power curves using clever approximations.</p>
+
+        <h2>The Problem: Production Scheduling with Nonlinear Power Consumption</h2>
+
+        <h3>Inputs</h3>
+        <ol>
+            <li><strong>24-hour electricity prices</strong> (€/kWh) - varying from €0.09 to €0.22</li>
+            <li><strong>Production target</strong>: 200 widgets (must produce exactly this amount)</li>
+            <li><strong>Machine constraints</strong>:
+                <ul>
+                    <li>Rate limits: 10-100 widgets/hr when ON</li>
+                    <li>Minimum up time: 2 hours (once started, must run at least 2 hours)</li>
+                    <li>Minimum down time: 1 hour (once stopped, must stay off at least 1 hour)</li>
+                </ul>
+            </li>
+            <li><strong>Power consumption curve</strong> (nonlinear!):
+                <pre><code>power(kW) = a × rate² + b × rate + c</code></pre>
+                where:
+                <ul>
+                    <li><strong>a</strong>: Quadratic coefficient (inefficiency at high rates)</li>
+                    <li><strong>b</strong>: Linear coefficient (direct energy per widget)</li>
+                    <li><strong>c</strong>: Base load (fixed overhead when ON)</li>
+                </ul>
+            </li>
+        </ol>
+
+        <h3>Output</h3>
+        <p>An optimal 24-hour schedule specifying:</p>
+        <ul>
+            <li>Which hours to run the machine (ON/OFF)</li>
+            <li>Production rate for each hour</li>
+            <li>Total energy cost</li>
+        </ul>
+
+        <h2>The MILP Formulation</h2>
+
+        <h3>Decision Variables</h3>
+
+        <p><strong>Binary (Integer) Variables</strong> - 72 total (24 hours × 3):</p>
+        <pre><code>m.on[t]    # 1 if machine ON at hour t, 0 otherwise
+m.start[t] # 1 if machine starts at hour t
+m.stop[t]  # 1 if machine stops at hour t</code></pre>
+
+        <p><strong>Continuous Variables</strong> - 48 total (24 hours × 2):</p>
+        <pre><code>m.rate[t]  # Production rate (widgets/hour) at hour t
+m.power[t] # Power consumption (kW) at hour t</code></pre>
+
+        <h3>Key Constraints</h3>
+
+        <p><strong>1. Link rate to on/off state:</strong></p>
+        <pre><code>rate[t] >= rate_min * on[t]  # When ON: rate >= 10
+rate[t] <= rate_max * on[t]  # When OFF: rate = 0</code></pre>
+
+        <p><strong>2. Startup/shutdown logic:</strong></p>
+        <pre><code>start[t] >= on[t] - on[t-1]  # Detects OFF→ON transitions
+stop[t] >= on[t-1] - on[t]   # Detects ON→OFF transitions</code></pre>
+
+        <p><strong>3. Minimum up/down time:</strong></p>
+        <pre><code># If we start at t, must stay on for min_up_hours
+sum(on[k] for k in range(t, t+min_up_hours)) >= min_up_hours * start[t]
+
+# If we stop at t, must stay off for min_down_hours
+sum(1-on[k] for k in range(t, t+min_down_hours)) >= min_down_hours * stop[t]</code></pre>
+
+        <p><strong>4. Daily production target:</strong></p>
+        <pre><code>sum(rate[t] for t in 0..23) == 200  # Equality mode</code></pre>
+
+        <p><strong>5. Piecewise-linear power curve (the clever part!):</strong></p>
+
+        <p>Since <code>power = a×rate² + b×rate + c</code> is nonlinear, we approximate it using <strong>piecewise-linear segments</strong> with <strong>SOS2 (Special Ordered Set type 2)</strong> variables:</p>
+
+        <pre><code>m.pw = pyo.Piecewise(
+    m.T,                    # Index: hours 0-23
+    m.power,                # Dependent variable: power
+    m.rate,                 # Independent variable: rate
+    pw_pts=breakpoints,     # e.g., [0, 9, 18, 27, ..., 100]
+    f_rule=power_values,    # Power at each breakpoint
+    pw_constr_type="EQ",    # Equality: power = f(rate)
+    pw_repn="SOS2",         # Use SOS2 for MILP efficiency
+)</code></pre>
+
+        <p>This creates 12 piecewise-linear segments that closely approximate the quadratic curve while keeping everything linear for the MILP solver.</p>
+
+        <h3>Objective Function</h3>
+
+        <pre><code>minimize: energy_cost + startup_penalties
+
+where:
+  energy_cost = sum(price[t] * power[t] for t in 0..23)
+  startup_penalties = startup_cost * sum(start[t] for t in 0..23)</code></pre>
+
+        <h2>The Fascinating Role of the Quadratic Coefficient</h2>
+
+        <p>Here's where things get interesting. By varying just the quadratic coefficient <strong>a</strong> in the power curve, we can simulate different types of machinery—and the optimizer adapts its strategy dramatically!</p>
+
+        <h3>Experiment 1: High Quadratic Penalty (a = 0.015)</h3>
+
+        <p><strong>Power curve:</strong> <code>power = 0.015×rate² + 0.6×rate + 5.0</code></p>
+
+        <p>At maximum rate (100 widgets/hr):</p>
+        <ul>
+            <li>Quadratic term: 150 kW (70% of total!)</li>
+            <li>Linear term: 60 kW (28%)</li>
+            <li>Base load: 5 kW (2%)</li>
+            <li><strong>Total: 215 kW</strong></li>
+        </ul>
+
+        <p>This represents equipment with <strong>severe inefficiencies at high speeds</strong> (e.g., pumps with quadratic drag losses).</p>
+
+        <p><strong>Optimal Strategy:</strong></p>
+        <pre><code>Hours ON: 0-7, 15-20, 23 (15 hours total)
+Max rate: 27 widgets/hr (conservative)
+Total cost: €35.62</code></pre>
+
+        <p>The optimizer spreads production across many hours at low rates to avoid the crushing quadratic penalty.</p>
+
+        <h3>Experiment 2: Low Quadratic Penalty (a = 0.001)</h3>
+
+        <p><strong>Power curve:</strong> <code>power = 0.001×rate² + 0.6×rate + 5.0</code></p>
+
+        <p>At maximum rate (100 widgets/hr):</p>
+        <ul>
+            <li>Quadratic term: 10 kW (13%)</li>
+            <li>Linear term: 60 kW (80%)</li>
+            <li>Base load: 5 kW (7%)</li>
+            <li><strong>Total: 75 kW</strong></li>
+        </ul>
+
+        <p>This represents <strong>highly scalable equipment</strong> with mostly linear power consumption.</p>
+
+        <p><strong>Optimal Strategy:</strong></p>
+        <pre><code>Hours ON: 2-6 (5 hours only!)
+Max rate: 60 widgets/hr (aggressive burst)
+Total cost: €29.25 (18% savings!)</code></pre>
+
+        <p>The optimizer concentrates all production in the cheapest hours (4-5am at €0.09/kWh) and runs at maximum feasible rates. This is a "sprint during cheap hours, stop during expensive hours" strategy.</p>
+
+        <h3>Experiment 3: Medium Quadratic Penalty (a = 0.005)</h3>
+
+        <p><strong>Power curve:</strong> <code>power = 0.005×rate² + 0.6×rate + 5.0</code></p>
+
+        <p>At maximum rate:</p>
+        <ul>
+            <li>Quadratic term: 50 kW (43%)</li>
+            <li><strong>Total: 115 kW</strong></li>
+        </ul>
+
+        <p><strong>Optimal Strategy:</strong></p>
+        <pre><code>Hours ON: 0-6, 18-19 (9 hours)
+Max rate: 36 widgets/hr (balanced)
+Total cost: €31.75</code></pre>
+
+        <p>A perfect middle ground—moderate rates, focused on cheaper hours.</p>
+
+        <h3>The Strategy Spectrum</h3>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>a value</th>
+                    <th>Cost</th>
+                    <th>Hours ON</th>
+                    <th>Max Rate</th>
+                    <th>Strategy</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>0.001</td>
+                    <td>€29.25</td>
+                    <td>5</td>
+                    <td>60</td>
+                    <td><strong>High-rate burst</strong></td>
+                </tr>
+                <tr>
+                    <td>0.005</td>
+                    <td>€31.75</td>
+                    <td>9</td>
+                    <td>36</td>
+                    <td><strong>Balanced moderate</strong></td>
+                </tr>
+                <tr>
+                    <td>0.015</td>
+                    <td>€35.62</td>
+                    <td>15</td>
+                    <td>27</td>
+                    <td><strong>Low-rate spread</strong></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p><strong>Visual representation:</strong></p>
+        <div class="ascii-art">a=0.001 (€29.25):  ████████░░░░░░░░░░░░░░  (burst)
+a=0.005 (€31.75):  ███████░░░░░░░░░░░██░░  (balanced)
+a=0.015 (€35.62):  ████████░░░░░░██████░█  (spread)
+                   0        8        16   24 (hours)</div>
+
+        <h2>Real-World Solver Performance</h2>
+
+        <p>Using the <strong>CBC (COIN-OR Branch and Cut)</strong> solver, here's what happens:</p>
+
+        <pre><code>Problem size: 191 constraints, 383 variables (71 binary)
+LP relaxation: €29.25 (lower bound)
+Cutting planes: 13 cuts added (Gomory, Probing, MIR)
+Integer solution: €29.25 (found in 0 nodes!)
+Solve time: 0.01 seconds</code></pre>
+
+        <p class="note"><strong>Key insight:</strong> The cutting planes were so effective that the LP relaxation bound matched the integer solution exactly—no branch-and-bound exploration needed! This is why MILP solvers are so powerful for well-structured problems.</p>
+
+        <h2>Practical Takeaways</h2>
+
+        <h3>1. Equipment Efficiency Curves Matter—A Lot</h3>
+
+        <p>The quadratic coefficient <strong>a</strong> acts as a "burst penalty" dial:</p>
+        <ul>
+            <li><strong>Low a</strong> (scalable equipment): Burst strategy during cheap periods</li>
+            <li><strong>High a</strong> (inefficient at high rates): Spread strategy across more hours</li>
+        </ul>
+
+        <p>Before optimizing, <strong>measure your actual equipment's power curve!</strong> Use the breakpoints configuration:</p>
+
+        <pre><code>curve:
+  type: breakpoints
+  rate_points: [0, 10, 20, 40, 60, 80, 100]
+  power_points: [0, 12, 25, 52, 85, 130, 195]  # From real measurements</code></pre>
+
+        <h3>2. MILP Can Handle Complexity</h3>
+
+        <p>This problem has:</p>
+        <ul>
+            <li class="checkmark">Binary on/off decisions</li>
+            <li class="checkmark">Minimum up/down time constraints</li>
+            <li class="checkmark">Nonlinear power curves (approximated)</li>
+            <li class="checkmark">Hourly varying constraints and prices</li>
+        </ul>
+
+        <p>Yet it solves in <strong>0.01 seconds</strong> on a laptop.</p>
+
+        <h3>3. The Base Load (c) Creates Interesting Trade-offs</h3>
+
+        <p>The fixed 5 kW base load when ON:</p>
+        <ul>
+            <li>Makes short, low-rate runs inefficient (overhead dominates)</li>
+            <li>Encourages either running longer or at higher rates</li>
+            <li>Creates the "sprint vs. marathon" dynamic we observed</li>
+        </ul>
+
+        <h3>4. Constraints Shape Solutions in Non-Obvious Ways</h3>
+
+        <p>The <code>min_up_hours=2</code> constraint forces at least 2-hour runs, preventing the optimizer from doing rapid on/off cycling. Without this, it might cycle every hour to chase price fluctuations (unrealistic for real equipment).</p>
+
+        <h2>The Code</h2>
+
+        <p>The complete optimizer is ~400 lines of Python and supports:</p>
+        <ul>
+            <li>Polynomial or breakpoint power curves</li>
+            <li>CSV input for prices and hourly constraints</li>
+            <li>Configurable min up/down times, ramp rates, startup costs</li>
+            <li>Both equality and minimum production targets</li>
+        </ul>
+
+        <p>Key dependencies:</p>
+        <pre><code>pip install pyomo pandas pyyaml
+sudo apt install coinor-cbc  # or: brew install cbc</code></pre>
+
+        <p>Run it:</p>
+        <pre><code>python producer_milp.py \
+  --config config.yaml \
+  --prices prices.csv \
+  --out schedule.csv</code></pre>
+
+        <h2>Conclusion</h2>
+
+        <p>Mixed-Integer Linear Programming is a powerful tool for optimization problems with both discrete decisions (on/off) and continuous variables (rates, power). By modeling our manufacturing problem as a MILP:</p>
+
+        <ol>
+            <li>We found <strong>18% cost savings</strong> by tuning equipment strategy to match its efficiency characteristics</li>
+            <li>We discovered how quadratic efficiency curves fundamentally change optimal scheduling strategies</li>
+            <li>We solved a complex 24-hour scheduling problem in <strong>10 milliseconds</strong></li>
+        </ol>
+
+        <p>The real magic happens when you combine:</p>
+        <ul>
+            <li>Domain knowledge (equipment physics, operational constraints)</li>
+            <li>Mathematical modeling (MILP formulation)</li>
+            <li>Modern solvers (CBC, Gurobi, CPLEX)</li>
+        </ul>
+
+        <p>Whether you're scheduling production, optimizing energy systems, planning logistics, or routing vehicles—MILP is likely the right tool for the job.</p>
+
+        <hr>
+
+        <p><strong>Try it yourself!</strong> The full code is available in this repository. Experiment with:</p>
+        <ul>
+            <li>Different power curves (try a=0.0 for purely linear!)</li>
+            <li>Startup costs (penalize frequent on/off cycling)</li>
+            <li>Ramp rate limits (constrain how fast production can change)</li>
+            <li>Different price profiles (solar-heavy grids have negative prices!)</li>
+        </ul>
+
+        <p>Happy optimizing!</p>
+
+        <hr>
+
+        <div class="license">
+            <h2 style="margin-top: 0;">License</h2>
+            <p>Copyright © 2025 <strong>FullStackEnergy.com</strong></p>
+            <p>This project is licensed under the MIT License.</p>
+        </div>
+
+        <div class="footer">
+            <p><em>Have questions or found an interesting variant? Drop a comment below or open an issue on GitHub!</em></p>
+            <p style="margin-top: 1em;">© 2025 FullStackEnergy.com | All rights reserved</p>
+        </div>
+    </div>
+</body>
+</html>

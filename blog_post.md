@@ -8,7 +8,9 @@ Imagine you run a manufacturing facility that produces widgets 24/7. Your electr
 
 This is a classic **day-ahead scheduling problem**, and it's exactly the kind of challenge that Mixed-Integer Linear Programming (MILP) excels at solving.
 
-In this post, I'll walk through building a complete MILP optimizer in Python using **Pyomo** and the **CBC solver**. Along the way, we'll discover some fascinating insights about how equipment efficiency curves fundamentally shape optimal production strategies.
+In this post, I'll walk through building a complete MILP optimizer in Python using **Pyomo** and the **CBC solver**. Along the way, we'll discover some fascinating insights about how equipment efficiency curves fundamentally shape optimal production strategies. 
+
+You can see the code [here in github](https://github.com/relihanl/milp-production-scheduler).
 
 ## What is MILP?
 
